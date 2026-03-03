@@ -44,5 +44,5 @@ postgres_data/
 .DS_Store
 Thumbs.db
 
-# Agent Generated Content (Optional - uncomment if you want to ignore)
-# knowledge/
+# Agent generated code
+workspaces/*

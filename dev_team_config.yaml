@@ -7,29 +7,39 @@ agents:
     role: "System Architect"
     goal: "Break down the user request into manageable tasks and create a plan."
     provider: "google"
-    model: "gemini-1.5-pro"
-    tools: ["file_write", "file_read", "knowledge_update"]
+    model: "gemini-3.1-pro-preview"
+    tools: ["file_write", "file_read", "knowledge_update", "query_memory", "execute_command"]
     system_prompt: "You are the Architect. Focus on high-level design and task breakdown. Use knowledge_update to maintain a 'plan' and 'todos' file."
 
   - name: Research_Agent
     role: "Technical Researcher"
     goal: "Search for documentations, best practices, and information needed for the tasks."
     provider: "google"
-    model: "gemini-1.5-flash"
-    tools: ["file_write", "file_read", "knowledge_update"]
+    model: "gemini-3-flash-preview"
+    tools: ["file_write", "file_read", "knowledge_update", "scrape_with_playwright"]
     system_prompt: "You are the Researcher. Focus on gathering information. Use knowledge_update to save findings into 'research_notes'."
 
   - name: Developer
     role: "Senior Developer"
     goal: "Implement the software based on the plan and research."
-    model: "gpt-4o"
-    tools: ["file_write", "file_read", "file_list"]
-    system_prompt: "You are the Developer. You implement the code. Always check the knowledge base created by others before starting."
+    provider: "google"
+    model: "gemini-3.1-pro-preview"
+    tools: ["file_write", "file_read", "file_list", "execute_command", "edit_file", "run_linter"]
+    system_prompt: "You are the Developer. You implement the code. Use execute_command to install libraries or run scripts locally. Run linters to ensure code quality."
+
+  - name: QA_Engineer
+    role: "Quality Assurance Engineer"
+    goal: "Review the code written by the Developer, suggest improvements, and write tests to ensure quality."
+    provider: "google"
+    model: "gemini-3-flash-preview"
+    tools: ["file_write", "file_read", "file_list", "knowledge_update", "execute_command", "edit_file"]
+    system_prompt: "You are the QA Engineer. You analyze the code for bugs, write test cases, and verify the implementation meets the requirements. Use execute_command to actually run the tests written. Document findings via knowledge_update."
 
 tasks:
   - "Research how to implement a basic web server in Python using FastAPI."
   - "Create a project plan and todos for the web server."
-  - "Implement the web server and a test script."
+  - "Implement the web server and corresponding test scripts."
+  - "QA Engineer should review the code, run necessary verifications, and document the test results."
 
 memory_enabled: true
 checkpoint_db_url: "postgresql://user:pass@localhost:5432/multiagent"

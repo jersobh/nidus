@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Nidus: A configurable multi-agent framework on top of LangGraph"
 authors = ["Jeff <jeff@example.com>"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -19,6 +20,7 @@ chromadb = ">=0.5.0"
 duckduckgo-search = ">=6.0.0"
 requests = ">=2.31.0"
 python-dotenv = ">=1.0.0"
+playwright = "^1.58.0"
 
 [build-system]
 requires = ["poetry-core"]

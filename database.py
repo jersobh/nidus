@@ -3,6 +3,7 @@ import psycopg2
 from typing import Optional
 import chromadb
 from chromadb.config import Settings
+from langchain_core.tools import tool
 
 def get_db_connection(db_url: str):
     """Simple wrapper for PostgreSQL connection."""

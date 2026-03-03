@@ -1,4 +1,4 @@
-from typing import List, TypedDict, Annotated, Union
+from typing import List, TypedDict, Annotated, Union, Dict, Optional
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 
