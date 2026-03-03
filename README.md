@@ -1,5 +1,8 @@
-# Nidus Multi-Agent Framework
+<div align="center">
+  <img src="logo.svg" alt="Nidus Logo" width="200"/>
+</div>
 
+# Nidus Multi-Agent Framework
 Nidus is a highly configurable multi-agent framework built on top of [LangGraph](https://github.com/langchain-ai/langgraph). It allows you to orchestrate specialized agents using a simple YAML configuration, supporting seamless collaboration between models from OpenAI, Anthropic, and Google (Gemini).
 
 ## Features
