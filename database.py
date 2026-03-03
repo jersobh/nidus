@@ -31,3 +31,23 @@ def init_databases(postgres_url: Optional[str], chroma_path: str):
             conn.close()
     
     print(f"ChromaDB initialized at {chroma_path}")
+
+@tool
+def query_memory(query: str, n_results: int = 3):
+    """
+    Search long-term vector database memory for related knowledge.
+    Returns the most relevant contexts related to the query.
+    """
+    try:
+        client = get_chroma_client("./chroma_db")
+        collection = client.get_or_create_collection("agent_memory")
+        results = collection.query(
+            query_texts=[query],
+            n_results=n_results
+        )
+        if hasattr(results, 'get') and results.get("documents") and results["documents"][0]:
+            return "Found relevant past memory:\n" + "\n---\n".join(results["documents"][0])
+        else:
+            return "No relevant memories found."
+    except Exception as e:
+        return f"Error querying database: {str(e)}"

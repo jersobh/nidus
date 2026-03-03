@@ -16,6 +16,10 @@ COPY pyproject.toml poetry.lock* ./
 RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi
 
+# Install Playwright dependencies for the scrape_with_playwright tool
+RUN playwright install chromium
+RUN playwright install-deps chromium
+
 COPY . .
 
 CMD ["python", "main.py", "dev_team_config.yaml"]

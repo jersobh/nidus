@@ -41,7 +41,7 @@ def scrape_with_playwright(url: str):
     """
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            browser = p.chromium.launch(headless=False)
             page = browser.new_page()
             # Wait until network is mostly idle to ensure JS has loaded
             page.goto(url, wait_until="networkidle", timeout=15000)
