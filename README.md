@@ -12,10 +12,11 @@ Nidus is a highly configurable multi-agent framework built on top of [LangGraph]
 - **Supervisor Pattern**: A central supervisor agent manages task routing and coordination between specialists.
 - **Human-in-the-Loop**: Built-in mechanisms to interrupt execution for human feedback, comments, or guidance.
 - **Comprehensive Toolset**: Includes tools for:
-  - **File Operations**: Create, read, edit, and list files.
-  - **Knowledge Management**: Specialized tools for agents to maintain shared `.md` plans and research notes.
+  - **File Operations**: Create, read, edit, list, and lint files.
+  - **Execution**: Execute shell commands and interactive programs within the workspace.
+  - **Knowledge Management**: Specialized tools for agents to maintain shared `.md` plans and query vector memories.
   - **Git**: Basic version control operations (clone, status, add, commit).
-  - **Web Search**: Search the web and read documentation using DuckDuckGo.
+  - **Web Search & Scraping**: Search the web, read documentation, and scrape JavaScript-heavy sites with Playwright.
 - **Persistence & Memory**: Integrated support for PostgreSQL (state check-pointing) and ChromaDB (vector memory) via Docker Compose.
 
 ## Prerequisites
@@ -85,10 +86,20 @@ agents:
 | --- | --- |
 | `file_write` | Write content to a file. |
 | `file_read` | Read content from a file. |
+| `file_list` | List files in a directory. |
+| `execute_command` | Execute a shell command in the workspace. |
+| `edit_file` | Edit specific lines in a file. |
 | `knowledge_update` | Maintain shared markdown knowledge files. |
+| `run_linter` | Run code linters (e.g., flake8) on a file. |
+| `query_memory` | Query the ChromaDB vector store for past context. |
+| `git_status` | Get the status of the current git repository. |
+| `git_add` | Add files to the git staging area. |
 | `git_commit` | Commit changes to current repo. |
+| `git_clone` | Clone a git repository. |
 | `web_search` | Search the web for information. |
-
+| `web_read` | Read text content from a website. |
+| `scrape_with_playwright` | Scrape javascript rendered websites using Playwright fallback. |
+| `doc_search` | Open and read documentation URLs. |
 ## License
 
 MIT License. See `LICENSE` for details.
