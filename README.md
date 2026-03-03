@@ -21,7 +21,7 @@ Nidus is a highly configurable multi-agent framework built on top of [LangGraph]
 
 ## Prerequisites
 
-- Python 3.11+
+- Python 3.12+
 - [Poetry](https://python-poetry.org/docs/#installation)
 - [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/)
 
@@ -30,7 +30,7 @@ Nidus is a highly configurable multi-agent framework built on top of [LangGraph]
 1. **Clone the repository**:
    ```bash
    git clone <repository-url>
-   cd multiagent
+   cd nidus
    ```
 
 2. **Install dependencies**:
