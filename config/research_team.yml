@@ -1,0 +1,48 @@
+name: AIBusinessInsightTeam_DeepDive
+description: "A team of agents dedicated to deep-dive research and comprehensive report generation."
+workspace_name: "ai-business-report-v2"
+
+agents:
+  - name: Strategy_Lead
+    role: "Managing Editor"
+    goal: "Orchestrate a deep research process. Reject superficial findings."
+    provider: "google"
+    model: "gemini-3.1-pro-preview"
+    tools: ["file_write", "file_read", "knowledge_update", "query_memory"]
+    system_prompt: "You are the Managing Editor. Your goal is a high-depth report (2000+ words). You must create a granular outline. If the Researcher's notes are too brief, create new tasks to force them back to search. Do not accept summaries; demand raw data and examples."
+
+  - name: Deep_Researcher
+    role: "Investigative Researcher"
+    goal: "Conduct exhaustive external research. MUST use search tools."
+    provider: "google"
+    model: "gemini-3.1-pro-preview" # Upgraded to Pro for better reasoning on search queries
+    tools: ["file_write", "file_read", "knowledge_update", "scrape_with_playwright", "google_search"]
+    system_prompt: "You are the Deep Researcher. You are FORBIDDEN from using internal knowledge. You must perform web searches for every topic. Collect detailed statistics, case studies, and quotes. When asked to research, create a long, detailed markdown file with citations. 'More is better'."
+
+  - name: Critical_Analyst
+    role: "Business Logic Analyst"
+    goal: "Critique AI hype and filter for business reality."
+    provider: "google"
+    model: "gemini-3-flash-preview"
+    tools: ["file_read", "knowledge_update", "file_write"]
+    system_prompt: "You are the Analyst. Read the research notes. Your job is to find the 'Why'. Why use AI here? Why NOT use AI there? Create a comparative analysis file that maps specific business problems to specific AI types (or non-AI solutions). explicitly listing the risks of GenAI."
+
+  - name: Longform_Writer
+    role: "Senior Technical Writer"
+    goal: "Write a comprehensive, detailed report. Avoid brevity."
+    provider: "google"
+    model: "gemini-3.1-pro-preview"
+    tools: ["file_write", "file_read", "edit_file"]
+    system_prompt: "You are the Senior Writer. Write a detailed report based on the Analyst's work. Use a professional, authoritative tone. Do not summarize bullet points; write full, explanatory paragraphs. Structure the report with: 1. Executive Summary, 2. The AI Spectrum (Definitions), 3. Strategic Framework (When to use what), 4. Case Studies, 5. The 'Do Not Use' List."
+
+tasks:
+  - "Strategy_Lead: Create a detailed Table of Contents for a 10-page business report. Save to 'outline.md'."
+  - "Deep_Researcher: Search and compile a detailed file 'research_definitions.md' specifically on the technical and functional differences between Predictive AI, GenAI, and Symbolic AI. Include real-world vendor examples."
+  - "Deep_Researcher: Search for 'AI implementation failures' and 'when not to use GenAI'. Compile a file 'research_limitations.md' with at least 5 real-world examples of where AI failed or was unnecessary."
+  - "Deep_Researcher: Search for ROI statistics of AI in business for the current year. Save findings to 'research_market_data.md'."
+  - "Critical_Analyst: Read all research files. Create a 'Decision_Matrix.md' that guides a user on choosing the right tech. Explicitly highlight where standard software (non-AI) is better."
+  - "Longform_Writer: Compile all research and analysis into 'Comprehensive_AI_Strategy_Report.md'. Ensure the final output is detailed and exceeds 2000 words."
+
+memory_enabled: true
+checkpoint_db_url: "postgresql://user:pass@localhost:5432/airesearch_v2"
+vector_db_path: "./chroma_db_report_v2"

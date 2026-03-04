@@ -7,7 +7,6 @@ from tools.file_tools import write_file, read_file, list_files, update_knowledge
 from tools.git_tools import git_status, git_add, git_commit, git_clone
 from tools.web_tools import web_search, read_website, scrape_with_playwright, open_documentation
 from tools.lint_tools import run_linter
-from database import query_memory
 from interface import display_agent_output, get_human_input, print_welcome
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
@@ -19,27 +18,7 @@ import os
 # Load environment variables from .env file
 load_dotenv()
 
-# Define available tools
-TOOLS_MAP = {
-    "file_write": write_file,
-    "file_read": read_file,
-    "file_list": list_files,
-    "execute_command": execute_command,
-    "edit_file": edit_file,
-    "knowledge_update": update_knowledge_doc,
-    "run_linter": run_linter,
-    "query_memory": query_memory,
-    "git_status": git_status,
-    "git_add": git_add,
-    "git_commit": git_commit,
-    "git_clone": git_clone,
-    "web_search": web_search,
-    "web_read": read_website,
-    "scrape_with_playwright": scrape_with_playwright,
-    "doc_search": open_documentation
-}
-
-def build_graph(config: FrameworkConfig):
+def build_graph(config: FrameworkConfig, tools_map: dict, checkpointer):
     workflow = StateGraph(AgentState)
     
     agent_names = [a.name for a in config.agents]
@@ -47,7 +26,7 @@ def build_graph(config: FrameworkConfig):
     # Add nodes for each agent
     for agent_config in config.agents:
         # Map tool names to actual tool objects
-        agent_tools = [TOOLS_MAP[t] for t in agent_config.tools if t in TOOLS_MAP]
+        agent_tools = [tools_map[t] for t in agent_config.tools if t in tools_map]
         node = create_agent_node(agent_config, agent_tools)
         workflow.add_node(agent_config.name, node)
     
@@ -79,13 +58,34 @@ def build_graph(config: FrameworkConfig):
     
     workflow.set_entry_point("supervisor")
     
-    # Checkpointer for memory
-    memory = InMemorySaver()
-    return workflow.compile(checkpointer=memory)
+    return workflow.compile(checkpointer=checkpointer)
 
 def run_framework(config_path: str):
     config = load_config(config_path)
-    graph = build_graph(config)
+    
+    print_welcome(config.name, config.description)
+    
+    from database import init_databases, get_query_memory_tool
+    init_databases(config.checkpoint_db_url, config.vector_db_path)
+    
+    tools_map = {
+        "file_write": write_file,
+        "file_read": read_file,
+        "file_list": list_files,
+        "execute_command": execute_command,
+        "edit_file": edit_file,
+        "knowledge_update": update_knowledge_doc,
+        "run_linter": run_linter,
+        "query_memory": get_query_memory_tool(config.vector_db_path),
+        "git_status": git_status,
+        "git_add": git_add,
+        "git_commit": git_commit,
+        "git_clone": git_clone,
+        "web_search": web_search,
+        "web_read": read_website,
+        "scrape_with_playwright": scrape_with_playwright,
+        "doc_search": open_documentation
+    }
     
     tasks_str = "\n".join([f"- {t}" for t in config.tasks]) if config.tasks else "Analyze the system."
     initial_task = f"Here are the tasks to complete:\n{tasks_str}"
@@ -99,8 +99,6 @@ def run_framework(config_path: str):
     
     config_run = {"configurable": {"thread_id": "1"}}
     
-    print_welcome(config.name, config.description)
-    
     # Setup memory.md path
     from tools.file_tools import resolve_path
     memory_file_path = resolve_path("memory.md", config.workspace_name)
@@ -111,17 +109,31 @@ def run_framework(config_path: str):
         f.write("# Agent Run Memory Log\n\n")
         f.write(f"**Initial Task:**\n{initial_task}\n\n---\n\n")
     
-    for output in graph.stream(inputs, config_run):
-        for key, value in output.items():
-            if key != "__metadata__":
-                if "messages" in value:
-                    msg_content = value["messages"][-1].content
-                    display_agent_output(key, msg_content)
-                    
-                    # Append to memory.md
-                    with open(memory_file_path, "a") as f:
-                        f.write(f"### {key.capitalize()}\n\n")
-                        f.write(f"{msg_content}\n\n---\n\n")
+    if config.checkpoint_db_url:
+        from psycopg_pool import ConnectionPool
+        from langgraph.checkpoint.postgres import PostgresSaver
+        pool = ConnectionPool(conninfo=config.checkpoint_db_url)
+        checkpointer = PostgresSaver(pool)
+    else:
+        checkpointer = InMemorySaver()
+        pool = None
+        
+    try:
+        graph = build_graph(config, tools_map, checkpointer)
+        for output in graph.stream(inputs, config_run):
+            for key, value in output.items():
+                if key != "__metadata__":
+                    if "messages" in value:
+                        msg_content = value["messages"][-1].content
+                        display_agent_output(key, msg_content)
+                        
+                        # Append to memory.md
+                        with open(memory_file_path, "a") as f:
+                            f.write(f"### {key.capitalize()}\n\n")
+                            f.write(f"{msg_content}\n\n---\n\n")
+    finally:
+        if pool:
+            pool.close()
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

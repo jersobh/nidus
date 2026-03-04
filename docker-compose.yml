@@ -7,7 +7,6 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - DATABASE_URL=postgresql://user:pass@db:5454/multiagent
     depends_on:
       - db
       - chromadb
@@ -17,10 +16,9 @@ services:
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
-      POSTGRES_DB: multiagent
-      POSTGRES_PORT: 5454
+      POSTGRES_PORT: 5432
     ports:
-      - "5454:5454"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
