@@ -63,7 +63,7 @@ docker-compose up --build
 
 2. **Run the framework**:
    ```bash
-   poetry run python main.py dev_team_config.yaml
+   poetry run python main.py config/dev_team_config.yaml
    ```
 
 ## Configuration
