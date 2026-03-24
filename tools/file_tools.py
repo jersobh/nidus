@@ -23,6 +23,16 @@ def write_file(path: str, content: str, workspace_name: str = "default"):
     return f"File written successfully to {full_path}"
 
 @tool
+def append_file(path: str, content: str, workspace_name: str = "default"):
+    """Append content to the end of a file at the specified path within the workspace."""
+    full_path = resolve_path(path, workspace_name)
+    os.makedirs(os.path.dirname(full_path), exist_ok=True)
+    with open(full_path, "a") as f:
+        f.write(content)
+    return f"Content appended successfully to {full_path}"
+
+
+@tool
 def read_file(path: str, workspace_name: str = "default"):
     """Read the content of a file at the specified path within the workspace."""
     full_path = resolve_path(path, workspace_name)

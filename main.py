@@ -3,7 +3,8 @@ from langgraph.graph import StateGraph, END
 from agents import create_agent_node, create_supervisor_node
 from config import load_config, FrameworkConfig
 from state import AgentState
-from tools.file_tools import write_file, read_file, list_files, update_knowledge_doc, execute_command, edit_file
+from tools.file_tools import write_file, read_file, list_files, update_knowledge_doc, execute_command, edit_file, append_file
+import json
 from tools.git_tools import git_status, git_add, git_commit, git_clone
 from tools.web_tools import web_search, read_website, scrape_with_playwright, open_documentation
 from tools.lint_tools import run_linter
@@ -70,6 +71,7 @@ def run_framework(config_path: str):
     
     tools_map = {
         "file_write": write_file,
+        "file_append": append_file,
         "file_read": read_file,
         "file_list": list_files,
         "execute_command": execute_command,
@@ -87,8 +89,29 @@ def run_framework(config_path: str):
         "doc_search": open_documentation
     }
     
-    tasks_str = "\n".join([f"- {t}" for t in config.tasks]) if config.tasks else "Analyze the system."
-    initial_task = f"Here are the tasks to complete:\n{tasks_str}"
+    from tools.file_tools import resolve_path
+    memory_file_path = resolve_path("memory.md", config.workspace_name)
+    state_file_path = resolve_path("run_state.json", config.workspace_name)
+    os.makedirs(os.path.dirname(memory_file_path), exist_ok=True)
+    
+    # Load state
+    completed_tasks = []
+    if os.path.exists(state_file_path):
+        try:
+            with open(state_file_path, "r") as f:
+                state_data = json.load(f)
+                completed_tasks = state_data.get("completed_tasks", [])
+        except Exception as e:
+            print(f"Warning: could not read state file: {e}")
+            
+    pending_tasks = [t for t in config.tasks if t not in completed_tasks]
+    if not pending_tasks:
+        print("All tasks are already completed according to run_state.json.")
+        print("Add new tasks to your config file to continue.")
+        return
+        
+    tasks_str = "\n".join([f"- {t}" for t in pending_tasks])
+    initial_task = f"Here are the pending tasks to complete:\n{tasks_str}\n\nDo not repeat already completed tasks."
     
     inputs = {
         "messages": [HumanMessage(content=initial_task, name="Human")],
@@ -97,17 +120,15 @@ def run_framework(config_path: str):
         "workspace_name": config.workspace_name
     }
     
-    config_run = {"configurable": {"thread_id": "1"}}
+    # Use workspace name as thread_id so each workspace has its own memory thread
+    config_run = {"configurable": {"thread_id": config.workspace_name}}
     
-    # Setup memory.md path
-    from tools.file_tools import resolve_path
-    memory_file_path = resolve_path("memory.md", config.workspace_name)
-    os.makedirs(os.path.dirname(memory_file_path), exist_ok=True)
-    
-    # Initialize/clear memory.md at the start of a run
-    with open(memory_file_path, "w") as f:
-        f.write("# Agent Run Memory Log\n\n")
-        f.write(f"**Initial Task:**\n{initial_task}\n\n---\n\n")
+    # Initialize/append memory.md at the start of a run
+    mode = "a" if completed_tasks else "w"
+    with open(memory_file_path, mode) as f:
+        if mode == "w":
+            f.write("# Agent Run Memory Log\n\n")
+        f.write(f"**Adding new pending tasks:**\n{initial_task}\n\n---\n\n")
     
     if config.checkpoint_db_url:
         from psycopg_pool import ConnectionPool
@@ -132,6 +153,11 @@ def run_framework(config_path: str):
                             f.write(f"### {key.capitalize()}\n\n")
                             f.write(f"{msg_content}\n\n---\n\n")
     finally:
+        # Save state marking the pending tasks as completed successfully
+        with open(state_file_path, "w") as f:
+            completed_tasks.extend(pending_tasks)
+            json.dump({"completed_tasks": completed_tasks}, f, indent=2)
+            
         if pool:
             pool.close()
 

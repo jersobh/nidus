@@ -13,7 +13,7 @@ class AgentConfig(BaseModel):
     goal: str
     provider: str = Field(default="openai") # openai, anthropic, google
     model: str = Field(default="gpt-4o")
-    tools: List[str] = Field(default_factory=list)
+    tools: List[str] = Field(default_factory=lambda: ["file_write", "file_append", "file_read", "edit_file"])
     system_prompt: Optional[str] = None
 
 class FrameworkConfig(BaseModel):
